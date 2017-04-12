@@ -46,31 +46,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, featu
                        visualise=False, feature_vector=feature_vec)
         return features
 
-def smart_stuff(car_features, notcar_features):
-    parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    svr = svm.SVC()
-    clf = grid_search.GridSearchCV(svr, parameters)
-    clf.fit(iris.data, iris.target)
-
-    y = np.hstack((np.ones(len(car_features)),
-              np.zeros(len(notcar_features))))
-
-    # Create an array stack of feature vectors
-    X = np.vstack((car_features, notcar_features)).astype(np.float64)
-    # Fit a per-column scaler
-    X_scaler = StandardScaler().fit(X)
-    # Apply the scaler to X
-    scaled_X = X_scaler.transform(X)
-
-    rand_state = np.random.randint(0, 100)
-    X_train, X_test, y_train, y_test = train_test_split(
-        scaled_X, y, test_size=0.2, random_state=rand_state)
-
-    # Use a linear SVC (support vector classifier)
-    svc = LinearSVC()
-    # Train the SVC
-    svc.fit(X_train, y_train)
-
 def bin_spatial(img, size=(32, 32)):
     color1 = cv2.resize(img[:,:,0], size).ravel()
     color2 = cv2.resize(img[:,:,1], size).ravel()
@@ -375,42 +350,18 @@ def draw_labeled_bboxes(img, labels):
 
 class HeatMapBuffer:
 
-    '''
     def __init__(self):
-        self.buffer = []
-        self.max = 25
+        self.heatmaps = []
+        self.max_frames = 25
 
     def add(self, heatmap):
-        self.buffer.append(heatmap)
+        self.heatmaps.append(heatmap)
 
     def average(self):
-        if len(self.buffer) > self.max:
-            self.buffer.pop(0)
-        np_buffer = np.array(self.buffer)
-        return np.sum(np_buffer, axis = 0)
-    '''
-    def __init__(self):
-        self.frames = []
-        self.max_frames = 40
-
-    def add(self, frame):
-        self.frames.insert(0, frame)
-
-    def _size(self):
-        return len(self.frames)
-
-    def _dequeue(self):
-        num_element_before = len(self.frames)
-        self.frames.pop()
-        num_element_after = len(self.frames)
-
-        assert num_element_before == (num_element_after + 1)
-
-    def average(self):
-        if self._size() > self.max_frames:
-            self._dequeue()
-        all_frames = np.array(self.frames)
-        return np.sum(all_frames, axis=0)
+        if len(self.heatmaps) > self.max_frames:
+            self.heatmaps.pop(0)
+        np_heatmaps = np.array(self.heatmaps)
+        return np.sum(np_heatmaps, axis=0)
 
 class VehicleFinder:
 
@@ -482,7 +433,7 @@ class VehicleFinder:
 
         # Apply threshold to help remove false positives
         all_heat = self.heat_map_buffer.average()
-        heat = apply_threshold(all_heat, 12)
+        heat = apply_threshold(all_heat, 15)
 
         # Visualize the heatmap when displaying
         heatmap = np.clip(heat, 0, 255)
