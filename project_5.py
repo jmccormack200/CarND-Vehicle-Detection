@@ -417,9 +417,9 @@ class VehicleFinder:
     def __init__(self,
         svc = None,
         X_scaler = None,
-        color_space = 'YCrCb',
-        orient = 9,
-        pix_per_cell = 8,
+        color_space = 'YUV',
+        orient = 11,
+        pix_per_cell = 16,
         cell_per_block = 2,
         hog_channel = "ALL",
         spatial_size = (32, 32),
@@ -459,7 +459,7 @@ class VehicleFinder:
         scale = 1.5 # set to 2 for 75 % overlap
 
         hot_windows = find_cars(image, ystart, ystop, scale, self.svc, self.X_scaler, self.orient, self.pix_per_cell, self.cell_per_block, self.spatial_size, self.hist_bins)
-        #print(hot_windows)
+
         '''
         slided_windows = slide_window(draw_image, x_start_stop=[None, None],
                                       y_start_stop=self.y_start_stop,
